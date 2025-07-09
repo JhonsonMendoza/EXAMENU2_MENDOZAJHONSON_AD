@@ -1,4 +1,3 @@
-// task.controller.js
 const {
   createTask,
   getUserTasks,
@@ -16,13 +15,27 @@ const create = async (req, res) => {
 };
 
 const getAll = async (req, res) => {
-  const tasks = await getUserTasks(req.userId);
-  res.json(tasks);
+  try {
+    const tasks = await getUserTasks(req.userId);
+
+    if (!tasks || tasks.length === 0) {
+      return res.status(200).json({ message: 'No tienes tareas registradas' });
+    }
+
+    res.json(tasks);
+  } catch (err) {
+    res.status(500).json({ message: 'Error al obtener tareas' });
+  }
 };
 
 const update = async (req, res) => {
   try {
     const task = await updateUserTask(req.params.id, req.userId, req.body);
+
+    if (!task) {
+      return res.status(403).json({ message: 'No tienes permiso para actualizar esta tarea o no existe' });
+    }
+
     res.json(task);
   } catch (err) {
     res.status(403).json({ message: err.message });
@@ -31,8 +44,13 @@ const update = async (req, res) => {
 
 const remove = async (req, res) => {
   try {
-    await deleteUserTask(req.params.id, req.userId);
-    res.json({ message: 'Task deleted' });
+    const deleted = await deleteUserTask(req.params.id, req.userId);
+
+    if (!deleted) {
+      return res.status(403).json({ message: 'No tienes permiso para eliminar esta tarea o no existe' });
+    }
+
+    res.json({ message: 'Tarea eliminada correctamente' });
   } catch (err) {
     res.status(403).json({ message: err.message });
   }
